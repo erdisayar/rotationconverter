@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rodrigues' Rotation Formula — Interactive Calculator</title>
+    <meta name="description"
+        content="Rodrigues rotation formula calculator with 3D visualization, matrix composition, and step-by-step derivation.">
+    <link rel="icon" type="image/png" href="rotation-icon.png">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Page-specific styles */
+        .page-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 1100px) {
+            .page-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .transform-entry {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: .75rem 1rem;
+            margin-bottom: .6rem;
+            border-left: 3px solid var(--accent);
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .transform-entry:hover {
+            border-color: var(--border-hi);
+            box-shadow: 0 2px 12px rgba(99, 115, 255, .1);
+        }
+
+        .te-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: .5rem;
+        }
+
+        .te-num {
+            font-family: var(--mono);
+            font-size: .9rem;
+            font-weight: 700;
+        }
+
+        .te-presets {
+            display: flex;
+            gap: .25rem;
+        }
+
+        .te-fields .input-row {
+            margin-bottom: .3rem;
+        }
+
+        .preset-btn {
+            font-family: var(--mono);
+            font-size: .7rem;
+            font-weight: 600;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text2);
+            border-radius: 4px;
+            padding: .2rem .5rem;
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .remove-btn {
+            background: none;
+            border: 1px solid transparent;
+            color: var(--text3);
+            font-size: .85rem;
+            cursor: pointer;
+            padding: .1rem .4rem;
+            border-radius: 4px;
+            transition: all .2s;
+        }
+
+        .remove-btn:hover {
+            color: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+
+        .add-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .4rem;
+            width: 100%;
+            padding: .6rem;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            background: none;
+            color: var(--accent);
+            font-family: var(--sans);
+            font-size: .82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            margin-top: .5rem;
+        }
+
+        .add-btn:hover {
+            border-color: var(--accent);
+            background: rgba(99, 115, 255, .06);
+        }
+
+        .unit-label {
+            font-family: var(--mono);
+            font-size: .72rem;
+            color: var(--text3);
+            margin-left: .3rem;
+        }
+
+        .formula-display {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .formula-display .formula {
+            font-family: var(--mono);
+            font-size: .9rem;
+            color: var(--accent2);
+            line-height: 1.8;
+        }
+
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+            color: var(--accent);
+            font-size: .8rem;
+            text-decoration: none;
+            transition: color .2s;
+        }
+
+        .nav-link:hover {
+            color: var(--accent2);
+        }
+
+        #viewer3d {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            position: relative;
+        }
+
+        #viewer3d canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .step-output {
+            font-family: var(--mono);
+            font-size: .78rem;
+            color: var(--text);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: .65rem;
+            white-space: pre;
+            overflow-x: auto;
+            line-height: 1.6;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+            margin: .75rem 0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: .3rem;
+            font-size: .72rem;
+            color: var(--text2);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="app-header">
+        <h1>
+            <svg viewBox="0 0 24 24" fill="none" stroke="url(#hg2)" stroke-width="2" stroke-linecap="round">
+                <defs>
+                    <linearGradient id="hg2" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#6373ff" />
+                        <stop offset="100%" stop-color="#00e5ff" />
+                    </linearGradient>
+                </defs>
+                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78z" />
+                <path d="M15.5 15.5L19 19" />
+            </svg>
+            Rodrigues' Rotation Formula
+        </h1>
+        <div class="subtitle">
+            Build and compose axis-angle rotations with step-by-step computation &amp; 3D visualization
+            &nbsp;·&nbsp; <a href="index.html" class="nav-link">Converter</a>
+            &nbsp;·&nbsp; <a href="transforms.html" class="nav-link">Transforms</a>
+        </div>
+        </div>
+    </header>
+
+    <div class="page-grid">
+
+        <!-- LEFT: Input & Formula -->
+        <div>
+
+
+            <!-- Controls -->
+            <div class="card">
+                <h2>
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                    </svg>
+                    Rotations
+                </h2>
+                <div style="margin-bottom:.75rem;display:flex;align-items:center;gap:1rem">
+                    <span style="font-size:.8rem;color:var(--text2)">Angle unit:</span>
+                    <div class="toggle-group">
+                        <label><input type="radio" name="unit" checked
+                                onchange="toggleDegrees(false)"><span>Radians</span></label>
+                        <label><input type="radio" name="unit"
+                                onchange="toggleDegrees(true)"><span>Degrees</span></label>
+                    </div>
+                </div>
+
+                <div style="font-size:.75rem;color:var(--text3);margin-bottom:.6rem">
+                    Add rotations below. Each R<sub>i</sub> is defined by axis <strong>k</strong> and angle
+                    <strong>θ</strong>.
+                    Use presets (X/Y/Z) for standard axes or enter custom vectors.
+                </div>
+
+                <div id="transform-list"></div>
+                <button class="add-btn" onclick="addTransform()">＋ Add Rotation</button>
+            </div>
+
+            <!-- Step-by-step output -->
+            <div class="card" style="margin-top:1.5rem">
+                <h2>
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                    </svg>
+                    Step-by-Step Computation
+                    <button class="copy-btn" style="margin-left:auto" onclick="copyResult('rodrigues-output')">⧉
+                        Copy</button>
+                </h2>
+                <pre class="step-output"
+                    id="rodrigues-output">Add rotations above to see Rodrigues' formula step-by-step.</pre>
+            </div>
+        </div>
+
+        <!-- RIGHT: 3D View & Result -->
+        <div>
+            <div class="card">
+                <h2>
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <path
+                            d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    </svg>
+                    3D Coordinate Frames
+                </h2>
+                <div id="viewer3d"></div>
+                <div class="legend">
+                    <div class="legend-item"><span class="legend-dot" style="background:#555577"></span> World frame
+                        (X₀Y₀Z₀)</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#ff6b6b"></span> R1</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#51cf66"></span> R2</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#339af0"></span> R3</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#fcc419"></span> R4+</div>
+                </div>
+                <span style="font-size:.68rem;color:var(--text3)">Drag to orbit · Scroll to zoom · Each colored frame
+                    shows the cumulative rotation up to R<sub>i</sub></span>
+            </div>
+
+            <div class="card" style="margin-top:1.5rem">
+                <h2>
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <path d="M3 9h18M9 21V9" />
+                    </svg>
+                    Composed Result Matrix
+                    <button class="copy-btn" style="margin-left:auto" onclick="copyResult('result-matrix')">⧉
+                        Copy</button>
+                </h2>
+                <div style="font-size:.75rem;color:var(--text3);margin-bottom:.5rem">
+                    Pre-multiply (standard robotics): R = R<sub>n</sub> · ... · R<sub>2</sub> · R<sub>1</sub>
+                </div>
+                <pre class="step-output" id="result-matrix" style="max-height:120px"></pre>
+            </div>
+        </div>
+
+    </div><!-- /page-grid -->
+
+    <footer style="text-align:center;padding:2rem 1rem;color:var(--text3);font-size:.75rem">
+        Rodrigues' Rotation Formula Calculator — <a href="index.html" class="nav-link">3D Rotation Converter</a>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Inline OrbitControls
+        THREE.OrbitControls = function (t, e) { this.object = t; this.domElement = e || document; this.enabled = !0; this.target = new THREE.Vector3; this.minDistance = 0; this.maxDistance = 1 / 0; this.enableDamping = !1; this.dampingFactor = .05; this.enablePan = !0; this.rotateSpeed = 1; this.zoomSpeed = 1; var n = this, a = 0, o = { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2 }, r = o.NONE, s = new THREE.Vector2, c = new THREE.Vector2, l = new THREE.Vector2, h = new THREE.Vector2, d = new THREE.Vector2, u = new THREE.Vector2, p = new THREE.Vector3, m = new THREE.Vector3, f = new THREE.Spherical, g = new THREE.Spherical, v = 1, y = new THREE.Vector3; function w() { return Math.pow(.95, n.zoomSpeed) } function x(t) { g.theta -= t } function b(t) { g.phi -= t } function M(t, e) { var a = n.domElement === document ? n.domElement.body : n.domElement; var o = new THREE.Vector3; o.setFromMatrixColumn(n.object.matrix, 0); o.multiplyScalar(-t * 2 * Math.tan(n.object.fov / 2 * Math.PI / 180) * n.object.position.distanceTo(n.target) / a.clientHeight); y.add(o); var r = new THREE.Vector3; r.setFromMatrixColumn(n.object.matrix, 1); r.multiplyScalar(e * 2 * Math.tan(n.object.fov / 2 * Math.PI / 180) * n.object.position.distanceTo(n.target) / a.clientHeight); y.add(r) } function S(e) { if (e.button === 0) r = o.ROTATE, s.set(e.clientX, e.clientY); else if (e.button === 1) r = o.ZOOM, h.set(e.clientX, e.clientY); else if (e.button === 2) { if (!n.enablePan) return; r = o.PAN; s.set(e.clientX, e.clientY) } } function T(e) { if (r === o.ROTATE) { c.set(e.clientX, e.clientY); l.subVectors(c, s); var t = n.domElement === document ? n.domElement.body : n.domElement; x(2 * Math.PI * l.x / t.clientHeight * n.rotateSpeed); b(2 * Math.PI * l.y / t.clientHeight * n.rotateSpeed); s.copy(c) } else if (r === o.ZOOM) { d.set(e.clientX, e.clientY); u.subVectors(d, h); u.y > 0 ? v *= w() : u.y < 0 && (v /= w()); h.copy(d) } else if (r === o.PAN) { c.set(e.clientX, e.clientY); l.subVectors(c, s); M(l.x, l.y); s.copy(c) } r !== o.NONE && n.update() } function E() { r = o.NONE } function P(e) { e.preventDefault(); e.deltaY < 0 ? v /= w() : e.deltaY > 0 && (v *= w()); n.update() } this.update = function () { var e = new THREE.Vector3, o = new THREE.Quaternion().setFromUnitVectors(t.up, new THREE.Vector3(0, 1, 0)), r = o.clone().invert(); return function () { e.copy(t.position).sub(n.target); e.applyQuaternion(o); f.setFromVector3(e); f.theta += g.theta; f.phi += g.phi; f.phi = Math.max(1e-6, Math.min(Math.PI - 1e-6, f.phi)); f.radius *= v; f.radius = Math.max(n.minDistance, Math.min(n.maxDistance, f.radius)); n.target.add(y); e.setFromSpherical(f); e.applyQuaternion(r); t.position.copy(n.target).add(e); t.lookAt(n.target); n.enableDamping ? (g.theta *= 1 - n.dampingFactor, g.phi *= 1 - n.dampingFactor) : (g.theta = 0, g.phi = 0); v = 1; y.set(0, 0, 0); return !1 } }(); var D = this.domElement === document ? this.domElement.body : this.domElement; D.addEventListener("mousedown", S, !1); D.addEventListener("mousemove", T, !1); D.addEventListener("mouseup", E, !1); D.addEventListener("wheel", P, { passive: !1 }); D.addEventListener("contextmenu", function (e) { e.preventDefault() }, !1); this.update() };
+    </script>
+    <script src="rodrigues.js"></script>
+
+</body>
+
+</html>
